@@ -38,6 +38,7 @@ async function run() {
     const servicesCollection = client.db("TechSolution").collection("services");
     const bookingCollection = client.db("TechSolution").collection("booking");
     const clientsEmailCollection = client.db("TechSolution").collection("clientsEmail");
+    const customRequestCollection = client.db("TechSolution").collection("customRequest")
 
     app.get("/api/v1/services", async (req, res) => {
       try {
@@ -134,7 +135,7 @@ async function run() {
       })
       
       app.post("/api/v1/contactEmail", async (req, res) => {
-          console.log("Received contact form data:", req.body);
+          // console.log("Received contact form data:", req.body);
           try {
               const data = req.body;
             const result = await clientsEmailCollection.insertOne(data);
@@ -145,6 +146,34 @@ async function run() {
           }
       });
 
+
+    //custom Request from Clients :
+
+    // Get all custom requests
+    app.get("/api/v1/custom-requests", async (req, res) => {
+      try {
+        const result = await customRequestCollection.find().toArray();
+        res.status(200).json(result);
+      } catch (err) {
+        console.error("Error fetching custom requests:", err);
+        res.status(500).send({ message: "Failed to fetch custom requests" });
+      }
+    });
+
+    // Add a new custom request
+    app.post("/api/v1/custom-requests", async (req, res) => {
+      console.log(" post :- ", req.body);
+      try {
+        const data = req.body;
+        const result = await customRequestCollection.insertOne(data);
+        res.status(201).json(result);
+      } catch (err) {
+        console.error("Error adding custom request:", err);
+        res.status(500).send("Server error");
+      }
+    });
+
+   
 
 
     await client.db("admin").command({ ping: 1 });
