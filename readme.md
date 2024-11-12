@@ -1,4 +1,3 @@
-
 # SimpleDimple API Server
 
 This is an Express server that connects to a MongoDB database to manage services, bookings, client emails, and custom requests for TechSolution. The server provides a REST API for interacting with these collections.
@@ -33,11 +32,7 @@ This is an Express server that connects to a MongoDB database to manage services
    npm start
    ```
 
-### API Endpoint
-
----
-
-
+## API Endpoint
 
 ##### 1. Service Endpoints
 
@@ -47,7 +42,7 @@ This is an Express server that connects to a MongoDB database to manage services
 
 ##### 2. Booking Endpoints
 
-- **GET /api/v1/all-booking**Returns all bookings.
+- **GET /api/v1/all-booking ** Returns all bookings.
 - **GET /api/v1/booking**Returns bookings filtered by email (query parameter `email`).
 - **POST /api/v1/booking**Adds a new booking. Accepts JSON data in the request body.
 - **DELETE /api/v1/booking/:id**
