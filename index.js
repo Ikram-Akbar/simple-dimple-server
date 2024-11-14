@@ -49,18 +49,35 @@ async function run() {
     const clientsEmailCollection = client.db("TechSolution").collection("clientsEmail");
     const customRequestCollection = client.db("TechSolution").collection("customRequest");
 
-    //Authentication : 
+    const verifyJwt = (req, res, next) => {
+      const jwToken = req.cookies.token; // Access the token from the specific cookie key
+      console.log(jwToken);
 
+      if (!jwToken) {
+        return res.status(401).json({ message: 'Access denied, token missing!' });
+      }
+
+      // Verify the token
+      jwt.verify(jwToken, process.env.JWT_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(403).json({ message: 'Invalid token!' });
+        }
+
+        req.user = decoded;
+        next();
+      });
+    };
+
+
+    //Authentication : 
     app.post("/api/v1/jwt", async (req, res) => {
       try {
-        //also check here : 
-        // find any problem then comment the problem line and solve the problem
         const data = req.body;
         console.log(data);
         const token = jwt.sign(data, process.env.JWT_SECRET || "defaultSecret", { expiresIn: '1h' });
 
         res
-          .cookie("jwt-token", token, {
+          .cookie("token", token, {
             httpOnly: true,
             secure:false,
             sameSite:"none",
@@ -72,6 +89,42 @@ async function run() {
         res.status(500).send({ error: "Failed to create token" });
       }
     });
+
+   /*  // Filter services based on query parameters
+    app.get("/api/v1/services/filter", async (req, res) => {
+      try {
+        const { category, minPrice, maxPrice, rating } = req.query;
+
+        // Initialize an empty query object
+        let query = {};
+
+        // Conditionally add filters to the query object based on provided parameters
+        if (category) {
+          query.category = category;
+        }
+
+        if (minPrice || maxPrice) {
+          query.price = {};
+          if (minPrice) query.price.$gte = parseFloat(minPrice);
+          if (maxPrice) query.price.$lte = parseFloat(maxPrice);
+        }
+
+        if (rating) {
+          query.rating = { $gte: parseFloat(rating) };  // Assuming rating is a numeric field
+        }
+
+        // Fetch filtered services
+        const filteredServices = await servicesCollection.find(query).toArray();
+
+        res.status(200).json(filteredServices);
+      } catch (error) {
+        console.error("Error fetching filtered services:", error);
+        res.status(500).json({ message: "Internal Server Error" });
+      }
+    }); */
+
+
+
 
     app.get("/api/v1/services", async (req, res) => {
       try {
@@ -109,19 +162,44 @@ async function run() {
       }
     });
 
-    app.get("/api/v1/booking", async (req, res) => {
+    
+     app.get("/api/v1/booking",async (req, res) => {
       try {
         let query = {};
         if (req.query.email) {
           query = { email: req.query.email };
         }
+        
         const result = await bookingCollection.find(query).toArray();
         res.status(200).json(result);
       } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Internal Server Error" });
       }
-    });
+    }); 
+    
+    
+    /* // Secure the booking route to allow access only to the logged-in user's data
+    app.get("/api/v1/booking", verifyJwt, async (req, res) => {
+      try {
+        // Ensure that the email in the query matches the email in the token
+        const queryEmail = req.query.email;
+        const userEmail = req.user.email;
+
+        if (queryEmail && queryEmail !== userEmail) {
+          return res.status(403).json({ message: "Access denied!" });
+        }
+
+        // Query for the logged-in user's data only
+        const query = { email: userEmail };
+        const result = await bookingCollection.find(query).toArray();
+        res.status(200).json(result);
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        res.status(500).json({ message: "Internal Server Error" });
+      }
+    }); */
+
 
     app.post("/api/v1/booking", async (req, res) => {
       try {
