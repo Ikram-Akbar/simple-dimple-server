@@ -15,9 +15,12 @@ const app = express();
  *******************
 ***/
 app.use(cors({
-  //check here any problem ? 
-
-  origin: ['http://localhost:5173','http://localhost:5174'],
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://simple-dimple-af6e6.firebaseapp.com',
+    'https://simple-dimple-af6e6.web.app'
+  ],
   credentials: true,
 }));
 app.use(express.json());
@@ -42,7 +45,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
 
     const servicesCollection = client.db("TechSolution").collection("services");
     const bookingCollection = client.db("TechSolution").collection("booking");
@@ -50,8 +53,8 @@ async function run() {
     const customRequestCollection = client.db("TechSolution").collection("customRequest");
 
     const verifyJwt = (req, res, next) => {
-      const jwToken = req.cookies.token; // Access the token from the specific cookie key
-      console.log(jwToken);
+      const jwToken = req.cookies.token;
+     
 
       if (!jwToken) {
         return res.status(401).json({ message: 'Access denied, token missing!' });
@@ -73,14 +76,14 @@ async function run() {
     app.post("/api/v1/jwt", async (req, res) => {
       try {
         const data = req.body;
-        console.log(data);
+      
         const token = jwt.sign(data, process.env.JWT_SECRET || "defaultSecret", { expiresIn: '1h' });
 
         res
           .cookie("token", token, {
             httpOnly: true,
-            secure:false,
-            sameSite:"none",
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? "Strict" : "None",
           })
           .send({ success: true });
         
@@ -147,7 +150,7 @@ async function run() {
           res.status(404).send({ message: "Service not found" });
         }
       } catch (err) {
-        console.error("Error: ", err);
+       
         res.status(500).send({ message: "Failed to fetch service" });
       }
     });
@@ -157,7 +160,7 @@ async function run() {
         const bookings = await bookingCollection.find().toArray();
         res.status(200).json(bookings);
       } catch (err) {
-        console.log(err);
+      
         res.status(500).send("Server error");
       }
     });
@@ -173,7 +176,7 @@ async function run() {
         const result = await bookingCollection.find(query).toArray();
         res.status(200).json(result);
       } catch (err) {
-        console.log(err);
+        
         res.status(500).json({ message: "Internal Server Error" });
       }
     }); 
@@ -207,7 +210,7 @@ async function run() {
         const result = await bookingCollection.insertOne(data);
         res.status(200).send(result);
       } catch (err) {
-        console.log(err);
+        
         res.status(500).send("Server error");
       }
     });
@@ -225,7 +228,7 @@ async function run() {
           res.status(404).json({ message: "Booking not found" });
         }
       } catch (err) {
-        console.log(err);
+        
         res.status(500).json({ message: "Internal Server Error" });
       }
     });
@@ -238,7 +241,7 @@ async function run() {
         const result = await clientsEmailCollection.find().toArray();
         res.send(result);
       } catch (err) {
-        console.log("Error fetching contact emails:", err);
+        // console.log("Error fetching contact emails:", err);
         res.status(500).json({ message: "Internal Server Error" });
       }
     });
@@ -272,7 +275,7 @@ async function run() {
 
     // Add a new custom request
     app.post("/api/v1/custom-requests", async (req, res) => {
-      console.log(" post :- ", req.body);
+      // console.log(" post :- ", req.body);
       try {
         const data = req.body;
         const result = await customRequestCollection.insertOne(data);
@@ -286,8 +289,8 @@ async function run() {
 
 
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Successfully connected to MongoDB!");
   } finally {
     // Uncomment this line if you want the client to close after operations
     // await client.close();
@@ -303,7 +306,7 @@ run().catch(console.dir);
 */
 
 app.get("/", (req, res) => {
-  res.status(200).send({ message: "Server is Running ", isActive: true });
+  res.status(200).send({ message: "Server is Running ",success:true });
 });
 
 app.listen(port, () => {
